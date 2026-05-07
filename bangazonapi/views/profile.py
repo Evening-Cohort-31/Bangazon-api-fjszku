@@ -242,10 +242,11 @@ class Profile(ViewSet):
             @apiError (404) {String} message  Not found message
             """
 
-            try:
-                open_order = Order.objects.get(customer=current_user)
-                print(open_order)
-            except Order.DoesNotExist as ex:
+            open_order = Order.objects.filter(
+                customer=current_user, payment_type=None
+            ).first()
+            # print(open_order) --- Not needed ---
+            if open_order is None:
                 open_order = Order()
                 open_order.created_date = datetime.datetime.now()
                 open_order.customer = current_user
