@@ -73,24 +73,18 @@ class Product(SafeDeleteModel):
         Returns:
             number -- The average rating for the product
         """
-        ratings = ProductRating.objects.filter(product=self)
+        try:
+            ratings = ProductRating.objects.filter(product=self)
 
-        if len(ratings) == 0:
+            total_rating = 0
+
+            for rating in ratings:
+                total_rating += rating.rating
+
+            avg = total_rating / len(ratings)
+            return avg
+        except ZeroDivisionError:
             return 0
-
-        total_rating = 0
-
-        for rating in ratings:
-            total_rating += rating.rating
-
-        """
-        Products with no ratings returned error, 
-        if statement resolves error by returning 0 if there are no ratings,
-        otherwise it returns the average rating
-        """
-
-        avg = total_rating / len(ratings)
-        return avg
 
     class Meta:
         verbose_name = "product"

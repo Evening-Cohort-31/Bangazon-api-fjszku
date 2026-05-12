@@ -167,7 +167,8 @@ class Products(ViewSet):
         """
         try:
             product = Product.objects.get(pk=pk)
-            serializer = ProductSerializer(product, context={"request": request})
+            product.can_be_rated = False 
+            serializer = ProductSerializer(product, context={'request': request})
             return Response(serializer.data)
         except Exception as ex:
             return HttpResponseServerError(ex)
@@ -297,6 +298,9 @@ class Products(ViewSet):
             #     return False
 
             # products = filter(sold_filter, products)
+
+        for product in products:
+            product.can_be_rated = False
 
         serializer = ProductSerializer(
             products, many=True, context={"request": request}
