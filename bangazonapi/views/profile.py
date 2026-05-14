@@ -85,7 +85,7 @@ class Profile(ViewSet):
         try:
             current_user = Customer.objects.get(user=request.auth.user)
             current_user.recommends = Recommendation.objects.filter(
-                recommender=current_user
+                customer=current_user
             )
 
             serializer = ProfileSerializer(
