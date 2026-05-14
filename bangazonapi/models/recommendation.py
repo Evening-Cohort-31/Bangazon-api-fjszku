@@ -7,7 +7,7 @@ class Recommendation(models.Model):
 
     customer = models.ForeignKey(
         Customer,
-        related_name="recommends",
+        related_name="customer",
         on_delete=models.CASCADE,
     )
     product = models.ForeignKey(
