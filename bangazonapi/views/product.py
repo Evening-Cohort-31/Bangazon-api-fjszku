@@ -9,7 +9,7 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers
 from rest_framework import status
-from bangazonapi.models import Product, Customer, ProductCategory
+from bangazonapi.models import Product, Customer, ProductCategory, ProductRating
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.parsers import MultiPartParser, FormParser
 
@@ -167,8 +167,8 @@ class Products(ViewSet):
         """
         try:
             product = Product.objects.get(pk=pk)
-            product.can_be_rated = False 
-            serializer = ProductSerializer(product, context={'request': request})
+            product.can_be_rated = False
+            serializer = ProductSerializer(product, context={"request": request})
             return Response(serializer.data)
         except Exception as ex:
             return HttpResponseServerError(ex)
@@ -318,6 +318,24 @@ class Products(ViewSet):
             rec.product = Product.objects.get(pk=pk)
 
             rec.save()
+
+            return Response(None, status=status.HTTP_204_NO_CONTENT)
+
+        return Response(None, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    # Fix issue with Product rating not responding to front end calls
+
+    @action(methods=["post"], detail=True, url_path="rate-product")
+    def rate_product(self, request, pk=None):
+        """Rate Products"""
+
+        if request.method == "POST":
+            product_rating = ProductRating()
+            product_rating.product = Product.objects.get(pk=pk)
+            product_rating.customer = Customer.objects.get(user=request.auth.user)
+            product_rating.rating = request.data["score"]
+
+            product_rating.save()
 
             return Response(None, status=status.HTTP_204_NO_CONTENT)
 
