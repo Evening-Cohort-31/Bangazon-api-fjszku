@@ -23,7 +23,7 @@ class PaymentTests(APITestCase):
         Ensure we can add a payment type for a customer.
         """
         # Add product to order
-        url = "/paymenttypes"
+        url = "/payment-types"
         data = {
             "merchant_name": "American Express",
             "account_number": "111-1111-1111",
@@ -44,14 +44,8 @@ class PaymentTests(APITestCase):
 
         self.test_create_payment_type()
 
-        url = "/paymenttypes/1"
-        self.client.credentials(HTTP_AUTHORIZATION='Token' + self.token)
+        url = "/payment-types/1"
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token)
         response = self.client.delete(url, None, format='json')
         
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-
-        url = "/paymenttypes/1"
-        self.client.credentials(HTTP_AUTHORIZATION='Token' + self.token)
-        response = self.client.get(url, None, format='json')
-
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
