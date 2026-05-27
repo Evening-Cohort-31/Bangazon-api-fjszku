@@ -167,8 +167,8 @@ class Products(ViewSet):
         """
         try:
             product = Product.objects.get(pk=pk)
-            product.can_be_rated = False 
-            serializer = ProductSerializer(product, context={'request': request})
+            product.can_be_rated = False
+            serializer = ProductSerializer(product, context={"request": request})
             return Response(serializer.data)
         except Exception as ex:
             return HttpResponseServerError(ex)
@@ -314,7 +314,9 @@ class Products(ViewSet):
         if request.method == "POST":
             rec = Recommendation()
             rec.recommender = Customer.objects.get(user=request.auth.user)
-            rec.customer = Customer.objects.get(user__id=request.data["recipient"])
+
+            target_username = request.data.get("username")
+            rec.customer = Customer.objects.get(user__username=target_username)
             rec.product = Product.objects.get(pk=pk)
 
             rec.save()
