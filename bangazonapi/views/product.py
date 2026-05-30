@@ -170,8 +170,13 @@ class Products(ViewSet):
             product.can_be_rated = False
             serializer = ProductSerializer(product, context={"request": request})
             return Response(serializer.data)
+
+        except Product.DoesNotExist:
+            return Response(None, status=status.HTTP_404_NOT_FOUND)  
+              
         except Exception as ex:
             return HttpResponseServerError(ex)
+
 
     def update(self, request, pk=None):
         """
