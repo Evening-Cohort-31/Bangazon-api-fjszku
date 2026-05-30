@@ -34,7 +34,15 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Order
         url = serializers.HyperlinkedIdentityField(view_name="order", lookup_field="id")
-        fields = ("id", "url", "created_date", "payment_type", "customer", "lineitems", "total")
+        fields = (
+            "id",
+            "url",
+            "created_date",
+            "payment_type",
+            "customer",
+            "lineitems",
+            "total",
+        )
 
         depth = 1
 
@@ -43,9 +51,9 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         total = sum(item.product.price for item in obj.lineitems.all())
         return round(total, 2)
 
+
 class Orders(ViewSet):
     """View for interacting with customer orders"""
-    
 
     def retrieve(self, request, pk=None):
         """
