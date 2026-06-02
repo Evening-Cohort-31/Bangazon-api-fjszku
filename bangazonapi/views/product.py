@@ -9,13 +9,31 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers
 from rest_framework import status
-from bangazonapi.models import Product, Customer, ProductCategory, ProductRating
+from bangazonapi.models import (
+    Product,
+    Customer,
+    ProductCategory,
+    ProductRating,
+    ProductLike,
+)
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.parsers import MultiPartParser, FormParser
 
 
 class ProductSerializer(serializers.ModelSerializer):
     """JSON serializer for products"""
+
+    is_liked = serializers.SerializerMethodField()
+
+    def get_is_liked(self, obj):
+        request = self.context["request"]
+
+        if request.auth is None:
+            return False
+
+        customer = Customer.objects.get(user=request.auth.user)
+
+        return ProductLike.objects.filter(product=obj, customer=customer).exists()
 
     class Meta:
         model = Product
@@ -31,6 +49,8 @@ class ProductSerializer(serializers.ModelSerializer):
             "image_path",
             "average_rating",
             "can_be_rated",
+            "likes",
+            "is_liked",
         )
         depth = 1
 
@@ -172,11 +192,10 @@ class Products(ViewSet):
             return Response(serializer.data)
 
         except Product.DoesNotExist:
-            return Response(None, status=status.HTTP_404_NOT_FOUND)  
-              
+            return Response(None, status=status.HTTP_404_NOT_FOUND)
+
         except Exception as ex:
             return HttpResponseServerError(ex)
-
 
     def update(self, request, pk=None):
         """
@@ -290,7 +309,7 @@ class Products(ViewSet):
         if quantity is not None:
             products = products.order_by("-created_date")[: int(quantity)]
 
-        if min_price is not None: 
+        if min_price is not None:
             products = products.filter(price__gte=min_price)
 
         if number_sold is not None:
@@ -351,3 +370,38 @@ class Products(ViewSet):
             return Response(None, status=status.HTTP_204_NO_CONTENT)
 
         return Response(None, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    @action(methods=["post", "delete"], detail=True)
+    def like(self, request, pk=None):
+        """Like or Unlike Products"""
+        product = Product.objects.get(pk=pk)
+        customer = Customer.objects.get(user=request.auth.user)
+
+        if request.method == "POST":
+            ProductLike.objects.get_or_create(product=product, customer=customer)
+
+            return Response(None, status=status.HTTP_204_NO_CONTENT)
+
+        elif request.method == "DELETE":
+            ProductLike.objects.filter(product=product, customer=customer).delete()
+
+            return Response(None, status=status.HTTP_204_NO_CONTENT)
+
+    @action(methods=["get"], detail=False)
+    def liked(self, request):
+        """Get all liked products"""
+
+        customer = Customer.objects.get(user=request.auth.user)
+
+        product_likes = ProductLike.objects.filter(customer=customer)
+
+        products = []
+
+        for product_like in product_likes:
+            products.append(product_like.product)
+
+        serializer = ProductSerializer(
+            products, many=True, context={"request": request}
+        )
+
+        return Response(serializer.data)
