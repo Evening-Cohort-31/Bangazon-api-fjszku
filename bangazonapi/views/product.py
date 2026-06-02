@@ -294,11 +294,11 @@ class Products(ViewSet):
             products = products.filter(price__gte=min_price)
 
         if number_sold is not None:
-            products = [
-                product
-                for product in products
-                if product.number_sold >= int(number_sold)
-            ]
+
+            def sold_filter(product):
+                if product.number_sold <= int(number_sold):
+                    return True
+                return False
 
             # Old Code:
             # def sold_filter(product):
